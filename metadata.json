@@ -1,0 +1,6 @@
+{
+  "name": "Kasir POS PWA",
+  "description": "Aplikasi Kasir POS modern, responsif, cepat, offline-ready dengan multi-satuan, multi-barcode, multi-harga, HPP, varian, dan asisten AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

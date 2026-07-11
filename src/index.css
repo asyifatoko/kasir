@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Map Amber utility color definitions to professional Emerald theme */
+  --color-amber-50: #ecfdf5;
+  --color-amber-100: #d1fae5;
+  --color-amber-200: #a7f3d0;
+  --color-amber-300: #6ee7b7;
+  --color-amber-400: #34d399;
+  --color-amber-500: #10b981;
+  --color-amber-600: #059669;
+  --color-amber-700: #047857;
+  --color-amber-800: #065f46;
+  --color-amber-900: #064e3b;
+  --color-amber-950: #022c22;
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.45);
+}
+
+/* DESIGN TOKEN INJECTION fallback system for complete professional dark slate theme */
+html, body, #root {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+/* Ensure the background on layout wrapper is deep slate */
+.bg-zinc-50, .dark\:bg-zinc-950 {
+  background-color: #0F172A !important;
+}
+
+/* Redefine sidebar bg to very dark slate */
+aside, .bg-zinc-900, .bg-slate-950 {
+  background-color: #020617 !important;
+}
+
+/* Default Surface overrides */
+.bg-white, .bg-zinc-800, .bg-zinc-900, .dark\:bg-zinc-900, .bg-slate-800 {
+  background-color: #1E293B !important;
+}
+
+/* Glass-morphism containers */
+.bg-white\/40, .bg-white\/60, .bg-white\/70, .bg-white\/80,
+.dark\:bg-zinc-900\/40, .dark\:bg-zinc-900\/60, .dark\:bg-zinc-900\/70 {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* Input boxes, Select dropdowns, textareas */
+input, select, textarea, .bg-zinc-950\/95, .bg-white\/95, .dark\:bg-zinc-950\/95 {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border-color: rgba(51, 65, 85, 0.85) !important;
+}
+
+/* Borders */
+[class*="border-zinc"],
+[class*="border-white/30"],
+[class*="border-white/40"],
+[class*="border-white/50"],
+[class*="border-slate-800"],
+[class*="divide-zinc"],
+[class*="divide-slate"],
+.border-b, .border-t, .border-r, .border-l {
+  border-color: rgba(51, 65, 85, 0.7) !important;
+}
+
+/* Primary text headings */
+.text-zinc-900, .text-zinc-800, .text-zinc-700,
+.dark\:text-white, .dark\:text-zinc-50, .dark\:text-zinc-100 {
+  color: #F8FAFC !important;
+}
+
+/* Secondary text */
+.text-zinc-500, .text-zinc-400, .text-zinc-600,
+.dark\:text-zinc-300, .dark\:text-zinc-400 {
+  color: #94A3B8 !important;
+}
+
+/* Active links / badges */
+.bg-zinc-100, .dark\:bg-zinc-800, .bg-zinc-50 {
+  background-color: #334155 !important;
+}
+
+.text-zinc-700, .dark\:text-zinc-300 {
+  color: #E2E8F0 !important;
+}
+
+/* Hover actions */
+.hover\:bg-zinc-100:hover, .dark\:hover\:bg-zinc-800:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-800\/30:hover {
+  background-color: rgba(51, 65, 85, 0.4) !important;
+}
+
+/* Emerald green button defaults */
+.bg-amber-500, .bg-emerald-500 {
+  background-color: #10B981 !important;
+  color: #020617 !important;
+}
+
+.bg-amber-500:hover, .bg-emerald-500:hover {
+  background-color: #059669 !important;
+}
+
+/* Specific warning / danger badges to keep their roles */
+.text-rose-600, .text-rose-400, .text-red-500 {
+  color: #EF4444 !important;
+}
+.bg-rose-500\/10, .bg-rose-100 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: #EF4444 !important;
+}
