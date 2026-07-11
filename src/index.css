@@ -5,7 +5,6 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Map Amber utility color definitions to professional Emerald theme */
   --color-amber-50: #ecfdf5;
   --color-amber-100: #d1fae5;
   --color-amber-200: #a7f3d0;
@@ -19,113 +18,224 @@
   --color-amber-950: #022c22;
 }
 
-/* Custom modern scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* =============================================
+   DARK MODE (default)
+   ============================================= */
+:root,
+[data-theme="dark"] {
+  --pos-bg-root:        #0F172A;
+  --pos-bg-sidebar:     #020617;
+  --pos-bg-surface:     #1E293B;
+  --pos-bg-card:        #1E293B;
+  --pos-bg-input:       #0F172A;
+  --pos-bg-hover:       rgba(51, 65, 85, 0.4);
+  --pos-bg-active:      #334155;
+  --pos-bg-badge:       #334155;
+  --pos-bg-glass:       rgba(30, 41, 59, 0.6);
+
+  --pos-border:         rgba(51, 65, 85, 0.7);
+  --pos-border-subtle:  rgba(51, 65, 85, 0.4);
+
+  --pos-text-primary:   #F8FAFC;
+  --pos-text-secondary: #94A3B8;
+  --pos-text-muted:     #64748B;
+  --pos-text-badge:     #E2E8F0;
+  --pos-text-input:     #F8FAFC;
+
+  --pos-accent:         #10B981;
+  --pos-accent-hover:   #059669;
+  --pos-accent-text:    #020617;
+  --pos-accent-dim:     rgba(16, 185, 129, 0.1);
+  --pos-accent-dimmer:  rgba(16, 185, 129, 0.05);
+
+  --pos-danger:         #EF4444;
+  --pos-danger-dim:     rgba(239, 68, 68, 0.1);
+
+  --pos-warning:        #F59E0B;
+  --pos-shadow:         0 4px 24px rgba(0,0,0,0.5);
+  --pos-shadow-sm:      0 1px 6px rgba(0,0,0,0.4);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* =============================================
+   LIGHT MODE
+   ============================================= */
+[data-theme="light"] {
+  --pos-bg-root:        #F1F5F9;
+  --pos-bg-sidebar:     #FFFFFF;
+  --pos-bg-surface:     #FFFFFF;
+  --pos-bg-card:        #FFFFFF;
+  --pos-bg-input:       #F8FAFC;
+  --pos-bg-hover:       rgba(15, 23, 42, 0.05);
+  --pos-bg-active:      #EEF2FF;
+  --pos-bg-badge:       #E2E8F0;
+  --pos-bg-glass:       rgba(255, 255, 255, 0.8);
+
+  --pos-border:         rgba(203, 213, 225, 0.9);
+  --pos-border-subtle:  rgba(203, 213, 225, 0.5);
+
+  --pos-text-primary:   #0F172A;
+  --pos-text-secondary: #475569;
+  --pos-text-muted:     #94A3B8;
+  --pos-text-badge:     #334155;
+  --pos-text-input:     #0F172A;
+
+  --pos-accent:         #059669;
+  --pos-accent-hover:   #047857;
+  --pos-accent-text:    #FFFFFF;
+  --pos-accent-dim:     rgba(5, 150, 105, 0.1);
+  --pos-accent-dimmer:  rgba(5, 150, 105, 0.05);
+
+  --pos-danger:         #DC2626;
+  --pos-danger-dim:     rgba(220, 38, 38, 0.08);
+
+  --pos-warning:        #D97706;
+  --pos-shadow:         0 4px 24px rgba(0,0,0,0.08);
+  --pos-shadow-sm:      0 1px 6px rgba(0,0,0,0.06);
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.25);
-  border-radius: 9999px;
+/* =============================================
+   GLOBAL BASE RESET USING CSS VARS
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.45);
-}
-
-/* DESIGN TOKEN INJECTION fallback system for complete professional dark slate theme */
 html, body, #root {
-  background-color: #0F172A !important;
-  color: #F8FAFC !important;
+  background-color: var(--pos-bg-root) !important;
+  color: var(--pos-text-primary) !important;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Ensure the background on layout wrapper is deep slate */
-.bg-zinc-50, .dark\:bg-zinc-950 {
-  background-color: #0F172A !important;
+/* Sidebar */
+aside,
+.pos-sidebar {
+  background-color: var(--pos-bg-sidebar) !important;
+  border-color: var(--pos-border) !important;
 }
 
-/* Redefine sidebar bg to very dark slate */
-aside, .bg-zinc-900, .bg-slate-950 {
-  background-color: #020617 !important;
+/* Cards / Surface */
+.bg-white,
+.bg-zinc-800,
+.bg-zinc-900,
+.bg-slate-800,
+.bg-slate-900,
+.pos-card,
+.pos-surface {
+  background-color: var(--pos-bg-surface) !important;
+  color: var(--pos-text-primary) !important;
 }
 
-/* Default Surface overrides */
-.bg-white, .bg-zinc-800, .bg-zinc-900, .dark\:bg-zinc-900, .bg-slate-800 {
-  background-color: #1E293B !important;
-}
-
-/* Glass-morphism containers */
+/* Glassmorphic containers */
 .bg-white\/40, .bg-white\/60, .bg-white\/70, .bg-white\/80,
-.dark\:bg-zinc-900\/40, .dark\:bg-zinc-900\/60, .dark\:bg-zinc-900\/70 {
-  background-color: rgba(30, 41, 59, 0.6) !important;
+.dark\:bg-zinc-900\/40, .dark\:bg-zinc-900\/60,
+.pos-glass {
+  background-color: var(--pos-bg-glass) !important;
   backdrop-filter: blur(12px) !important;
 }
 
-/* Input boxes, Select dropdowns, textareas */
-input, select, textarea, .bg-zinc-950\/95, .bg-white\/95, .dark\:bg-zinc-950\/95 {
-  background-color: #0F172A !important;
-  color: #F8FAFC !important;
-  border-color: rgba(51, 65, 85, 0.85) !important;
+/* Inputs */
+input, select, textarea {
+  background-color: var(--pos-bg-input) !important;
+  color: var(--pos-text-input) !important;
+  border-color: var(--pos-border) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--pos-text-muted) !important;
 }
 
 /* Borders */
 [class*="border-zinc"],
-[class*="border-white/30"],
-[class*="border-white/40"],
-[class*="border-white/50"],
-[class*="border-slate-800"],
-[class*="divide-zinc"],
-[class*="divide-slate"],
-.border-b, .border-t, .border-r, .border-l {
-  border-color: rgba(51, 65, 85, 0.7) !important;
+[class*="border-slate"],
+[class*="border-white/"],
+.border, .border-b, .border-t, .border-r, .border-l {
+  border-color: var(--pos-border) !important;
 }
 
-/* Primary text headings */
+/* Primary text */
 .text-zinc-900, .text-zinc-800, .text-zinc-700,
-.dark\:text-white, .dark\:text-zinc-50, .dark\:text-zinc-100 {
-  color: #F8FAFC !important;
+.text-slate-900, .text-slate-800, .text-slate-100, .text-slate-50,
+.dark\:text-white, .dark\:text-zinc-50, .dark\:text-zinc-100,
+.pos-text-primary {
+  color: var(--pos-text-primary) !important;
 }
 
 /* Secondary text */
 .text-zinc-500, .text-zinc-400, .text-zinc-600,
-.dark\:text-zinc-300, .dark\:text-zinc-400 {
-  color: #94A3B8 !important;
+.text-slate-400, .text-slate-500,
+.dark\:text-zinc-300, .dark\:text-zinc-400,
+.pos-text-secondary {
+  color: var(--pos-text-secondary) !important;
 }
 
-/* Active links / badges */
-.bg-zinc-100, .dark\:bg-zinc-800, .bg-zinc-50 {
-  background-color: #334155 !important;
+/* Active badges */
+.bg-zinc-100, .dark\:bg-zinc-800, .bg-zinc-50,
+.bg-slate-700, .bg-slate-800,
+.pos-badge {
+  background-color: var(--pos-bg-badge) !important;
+  color: var(--pos-text-badge) !important;
 }
 
-.text-zinc-700, .dark\:text-zinc-300 {
-  color: #E2E8F0 !important;
+/* Hover */
+.hover\:bg-zinc-100:hover,
+.hover\:bg-zinc-50:hover,
+.hover\:bg-slate-800\/30:hover,
+.dark\:hover\:bg-zinc-800:hover {
+  background-color: var(--pos-bg-hover) !important;
 }
 
-/* Hover actions */
-.hover\:bg-zinc-100:hover, .dark\:hover\:bg-zinc-800:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-800\/30:hover {
-  background-color: rgba(51, 65, 85, 0.4) !important;
+/* Accent/primary button */
+.bg-amber-500, .bg-emerald-500, .bg-emerald-600,
+.pos-btn-primary {
+  background-color: var(--pos-accent) !important;
+  color: var(--pos-accent-text) !important;
+}
+.bg-amber-500:hover, .bg-emerald-500:hover, .bg-emerald-600:hover,
+.pos-btn-primary:hover {
+  background-color: var(--pos-accent-hover) !important;
 }
 
-/* Emerald green button defaults */
-.bg-amber-500, .bg-emerald-500 {
-  background-color: #10B981 !important;
-  color: #020617 !important;
-}
-
-.bg-amber-500:hover, .bg-emerald-500:hover {
-  background-color: #059669 !important;
-}
-
-/* Specific warning / danger badges to keep their roles */
+/* Danger */
 .text-rose-600, .text-rose-400, .text-red-500 {
-  color: #EF4444 !important;
+  color: var(--pos-danger) !important;
 }
 .bg-rose-500\/10, .bg-rose-100 {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  color: #EF4444 !important;
+  background-color: var(--pos-danger-dim) !important;
+  color: var(--pos-danger) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pos-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pos-text-muted);
+}
+
+/* Smooth transitions for theme switch */
+*, *::before, *::after {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Override transition for interactive elements to keep them snappy */
+button, a, input, select, textarea {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.1s ease,
+    opacity 0.1s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease !important;
 }
