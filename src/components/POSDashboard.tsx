@@ -77,12 +77,12 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
   return (
     <div className="space-y-6" id="pos-dashboard">
       {/* Top Header / Greeting */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-800/40 p-6 rounded-3xl border border-slate-800/80 backdrop-blur-xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-slate-800/40 p-6 rounded-3xl border border-zinc-200 dark:border-slate-800/80 backdrop-blur-xl shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-slate-50 tracking-tight flex items-center gap-2">
             Selamat Datang di POS Kasir <Sparkles className="w-5 h-5 text-emerald-450 animate-pulse" />
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-zinc-500 dark:text-slate-400 mt-1">
             Pantau performa inventaris toko Anda secara real-time dan kelola penjualan dengan mudah.
           </p>
         </div>
@@ -90,7 +90,7 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         <div className="flex items-center gap-3">
           <button 
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-zinc-100 dark:bg-slate-800 hover:bg-zinc-200 dark:hover:bg-slate-700/80 border border-zinc-200 dark:border-slate-700 rounded-xl text-zinc-700 dark:text-slate-200 transition-all cursor-pointer"
           >
             <RefreshCcw className="w-4 h-4" /> Segarkan
           </button>
@@ -107,11 +107,11 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
       {/* Grid STATS UTAMA */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Item */}
-        <div className="bg-slate-800/75 p-5 rounded-2xl border border-slate-800/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800/75 p-5 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Produk</span>
-            <span className="text-3xl font-extrabold text-slate-50 mt-1 block">{totalItems}</span>
-            <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-slate-400 uppercase tracking-wider block">Total Produk</span>
+            <span className="text-3xl font-extrabold text-zinc-900 dark:text-slate-50 mt-1 block">{totalItems}</span>
+            <div className="text-xs text-zinc-900 dark:text-zinc-400 dark:text-slate-500 mt-2 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> {activeItems} Aktif &bull; {inactiveItems} Pasif
             </div>
           </div>
@@ -121,13 +121,13 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         </div>
 
         {/* Nilai Persediaan */}
-        <div className="bg-slate-800/75 p-5 rounded-2xl border border-slate-800/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800/75 p-5 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Nilai Persediaan (HPP)</span>
-            <span className="text-xl font-bold text-slate-50 mt-2 block truncate max-w-[180px]">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-slate-400 uppercase tracking-wider block">Nilai Persediaan (HPP)</span>
+            <span className="text-xl font-bold text-zinc-900 dark:text-slate-50 mt-2 block truncate max-w-[180px]">
               {formatRupiah(totalInventoryValue)}
             </span>
-            <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <div className="text-xs text-zinc-900 dark:text-zinc-400 dark:text-slate-500 mt-2 flex items-center gap-1">
               <Layers className="w-3.5 h-3.5 text-emerald-400" /> Multi-Satuan Terhitung
             </div>
           </div>
@@ -137,10 +137,10 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         </div>
 
         {/* Transaksi Hari Ini */}
-        <div className="bg-slate-800/75 p-5 rounded-2xl border border-slate-800/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800/75 p-5 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Omset Penjualan</span>
-            <span className="text-xl font-bold text-slate-50 mt-2 block">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-slate-400 uppercase tracking-wider block">Omset Penjualan</span>
+            <span className="text-xl font-bold text-zinc-900 dark:text-slate-50 mt-2 block">
               {formatRupiah(totalSalesRevenue)}
             </span>
             <div className="text-xs text-emerald-400 mt-2 font-medium flex items-center gap-1">
@@ -153,13 +153,13 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         </div>
 
         {/* Barang Habis / Menipis */}
-        <div className="bg-slate-800/75 p-5 rounded-2xl border border-slate-800/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800/75 p-5 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Peringatan Stok</span>
+            <span className="text-xs font-semibold text-zinc-500 dark:text-slate-400 uppercase tracking-wider block">Peringatan Stok</span>
             <span className="text-3xl font-extrabold text-rose-400 mt-1 block">
               {outOfStockItems.length + lowStockItems.length}
             </span>
-            <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <div className="text-xs text-zinc-900 dark:text-zinc-400 dark:text-slate-500 mt-2 flex items-center gap-1">
               <span className="text-rose-400 font-semibold">{outOfStockItems.length} Kosong</span> &bull; <span>{lowStockItems.length} Hampir Habis</span>
             </div>
           </div>
@@ -174,8 +174,8 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         
         {/* Kolom 1: Stock Alert & Expired */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-800/80 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-50 flex items-center gap-2 mb-4">
+          <div className="bg-white dark:bg-slate-800/60 p-6 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-slate-50 flex items-center gap-2 mb-4">
               <Bell className="w-5 h-5 text-emerald-500" /> Peringatan & Notifikasi Penting
             </h2>
 
@@ -232,7 +232,7 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
 
               {/* If no alerts */}
               {expiredAndWarnings.length === 0 && stocks.filter(s => s.stok_tersedia <= s.stok_minimum).length === 0 && (
-                <div className="p-8 text-center text-slate-500 text-xs">
+                <div className="p-8 text-center text-zinc-900 dark:text-zinc-400 dark:text-slate-500 text-xs">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                   Semua stok aman dan tidak ada barang kadaluarsa.
                 </div>
@@ -241,8 +241,8 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
           </div>
 
           {/* Quick Chart / Category Distribution */}
-          <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-800/80 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800/60 p-6 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-slate-50 mb-4 flex items-center gap-2">
               <Layers className="w-5 h-5 text-emerald-500" /> Distribusi Kategori Barang
             </h2>
 
@@ -252,11 +252,11 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
                 const percentage = totalItems > 0 ? (count / totalItems) * 100 : 0;
                 return (
                   <div key={cat} className="space-y-1">
-                    <div className="flex justify-between text-xs font-semibold text-slate-400">
+                    <div className="flex justify-between text-xs font-semibold text-zinc-500 dark:text-slate-400">
                       <span>{cat}</span>
                       <span>{count} Barang ({percentage.toFixed(0)}%)</span>
                     </div>
-                    <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                    <div className="w-full bg-zinc-200 dark:bg-slate-900 h-2.5 rounded-full overflow-hidden border border-zinc-200 dark:border-slate-800">
                       <div 
                         className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
                         style={{ width: `${percentage}%` }}
@@ -272,11 +272,11 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
         {/* Kolom 2: Barang Terlaris / Tidak Bergerak */}
         <div className="space-y-6">
           {/* Best Sellers */}
-          <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-800/80 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800/60 p-6 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-slate-50 mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-emerald-500" /> Produk Terlaris
             </h2>
-            <div className="divide-y divide-slate-800/80">
+            <div className="divide-y divide-zinc-200 dark:divide-slate-800/80">
               {bestSellers.map((item, index) => {
                 const unit = POSStorage.getUnitsByItem(item.id)[0];
                 return (
@@ -285,14 +285,14 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
                     <img 
                       src={item.foto_produk || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=80"} 
                       alt={item.nama_barang} 
-                      className="w-10 h-10 rounded-lg object-cover bg-slate-900"
+                      className="w-10 h-10 rounded-lg object-cover bg-zinc-200 dark:bg-slate-900"
                     />
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-bold text-slate-200 block truncate">{item.nama_barang}</span>
-                      <span className="text-[10px] text-slate-400 block">{item.brand_merk} &bull; {item.kategori}</span>
+                      <span className="text-xs font-bold text-zinc-700 dark:text-slate-200 block truncate">{item.nama_barang}</span>
+                      <span className="text-[10px] text-zinc-500 dark:text-slate-400 block">{item.brand_merk} &bull; {item.kategori}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-bold text-slate-200 block">{formatRupiah(unit?.harga_jual || 0)}</span>
+                      <span className="text-xs font-bold text-zinc-700 dark:text-slate-200 block">{formatRupiah(unit?.harga_jual || 0)}</span>
                       <span className="text-[9px] text-emerald-400 block">Fast Moving</span>
                     </div>
                   </div>
@@ -302,23 +302,23 @@ export default function POSDashboard({ onNavigate }: POSDashboardProps) {
           </div>
 
           {/* Non Moving Items */}
-          <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-800/80 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800/60 p-6 rounded-2xl border border-zinc-200 dark:border-slate-800/80 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-slate-50 mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" /> Barang Lambat Bergerak (Dead Stock)
             </h2>
-            <p className="text-xs text-slate-400 mb-3">Produk yang tidak mengalami penjualan dalam 30 hari terakhir:</p>
+            <p className="text-xs text-zinc-500 dark:text-slate-400 mb-3">Produk yang tidak mengalami penjualan dalam 30 hari terakhir:</p>
             <div className="space-y-3">
               {nonMovingItems.map(item => {
                 const itemStocks = POSStorage.getStockByItem(item.id);
                 const totalQty = itemStocks.reduce((sum, s) => sum + s.stok_tersedia, 0);
                 return (
-                  <div key={item.id} className="flex items-center justify-between p-2.5 bg-slate-900/50 rounded-xl border border-slate-800/80 text-xs">
+                  <div key={item.id} className="flex items-center justify-between p-2.5 bg-zinc-100 dark:bg-slate-900/50 rounded-xl border border-zinc-200 dark:border-slate-800/80 text-xs">
                     <div>
-                      <span className="font-semibold text-slate-200 block">{item.nama_barang}</span>
-                      <span className="text-[10px] text-slate-400">Rak: {item.rak || "Utama"} &bull; Kat: {item.kategori}</span>
+                      <span className="font-semibold text-zinc-700 dark:text-slate-200 block">{item.nama_barang}</span>
+                      <span className="text-[10px] text-zinc-500 dark:text-slate-400">Rak: {item.rak || "Utama"} &bull; Kat: {item.kategori}</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-slate-300 block">{totalQty} Pcs</span>
+                      <span className="font-bold text-zinc-600 dark:text-slate-300 block">{totalQty} Pcs</span>
                       <span className="text-[9px] text-amber-400">Dead Stock</span>
                     </div>
                   </div>

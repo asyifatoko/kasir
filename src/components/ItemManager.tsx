@@ -202,7 +202,12 @@ export default function ItemManager() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Apakah Anda yakin ingin menghapus produk ini beserta seluruh satuannya?")) {
-      await POSStorage.deleteItem(id);
+      try {
+        await POSStorage.deleteItem(id);
+      } catch (err: any) {
+        console.error(err);
+        alert(err?.message || "Gagal menghapus produk.");
+      }
       setItems([...POSStorage.getItems()]);
     }
   };
@@ -313,10 +318,10 @@ export default function ItemManager() {
   };
 
   const handleCalculateBaseHpp = () => {
-    const baseUnit = modalUnits.find(u =>
-      u.jenis_satuan === "Satuan Dasar" ||
-      u.konversi === 1 ||
-      u.konversi === "1" ||
+    const baseUnit = modalUnits.find(u => 
+      u.jenis_satuan === "Satuan Dasar" || 
+      u.konversi === 1 || 
+      u.konversi === "1" || 
       parseFloat(u.konversi as any) === 1
     ) || modalUnits[0];
 
@@ -324,73 +329,34 @@ export default function ItemManager() {
       alert("Satuan dasar tidak ditemukan!");
       return;
     }
-
     const baseCost = parseFloat(baseUnit.harga_pokok as any) || 0;
-    const multiUnits = modalUnits.filter(u => u.id !== baseUnit.id);
-
-    // Deteksi arah: jika Satuan Dasar belum ada harga pokok tapi Satuan Multi ada,
-    // hitung terbalik: Harga Pokok Dasar = Harga Pokok Multi ÷ Konversi
-    if (baseCost <= 0 && multiUnits.length > 0) {
-      const firstMulti = multiUnits.find(u => (parseFloat(u.harga_pokok as any) || 0) > 0);
-      if (!firstMulti) {
-        alert("Tolong isi Harga Pokok pada salah satu satuan (Dasar atau Multi) terlebih dahulu!");
-        return;
-      }
-      const multiCost = parseFloat(firstMulti.harga_pokok as any) || 0;
-      const multiKonv = parseFloat(firstMulti.konversi as any) || 1;
-      const derivedBaseCost = Math.round(multiCost / multiKonv);
-
-      // Update Satuan Dasar dengan harga yang diturunkan dari Multi
-      const updatedUnits = modalUnits.map(u => {
-        if (u.id === baseUnit.id) {
-          const jual = parseFloat(u.harga_jual as any) || 0;
-          const proc = derivedBaseCost > 0
-            ? parseFloat((((jual - derivedBaseCost) / derivedBaseCost) * 100).toFixed(2))
-            : 0;
-          return { ...u, harga_pokok: derivedBaseCost, proc_persen: proc };
-        }
-        // Hitung ulang semua satuan multi lain berdasarkan harga dasar yang baru
-        const konv = parseFloat(u.konversi as any) || 1;
-        const updatedCost = Math.round(derivedBaseCost * konv);
-        const jual = parseFloat(u.harga_jual as any) || 0;
-        const proc = updatedCost > 0
-          ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2))
-          : 0;
-        return { ...u, harga_pokok: updatedCost, proc_persen: proc };
-      });
-      setModalUnits(updatedUnits);
-      alert(
-        `Harga Pokok Dasar dihitung dari Satuan Multi:\n` +
-        `${firstMulti.nama} (Rp ${multiCost.toLocaleString("id-ID")}) ÷ ${multiKonv} = ` +
-        `Rp ${derivedBaseCost.toLocaleString("id-ID")} per ${baseUnit.nama}`
-      );
-      return;
-    }
-
     if (baseCost <= 0) {
       alert("Tolong isi Harga Pokok Satuan Dasar terlebih dahulu!");
       return;
     }
 
-    // Arah normal: Satuan Dasar → Multi
     setModalUnits(prev => prev.map(u => {
       if (u.id === baseUnit.id) return u;
+      
       const konv = parseFloat(u.konversi as any) || 1;
       const updatedCost = Math.round(baseCost * konv);
       const jual = parseFloat(u.harga_jual as any) || 0;
-      const proc = updatedCost > 0
-        ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2))
-        : 0;
-      return { ...u, harga_pokok: updatedCost, proc_persen: proc };
+      const proc = updatedCost > 0 ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2)) : 0;
+      
+      return {
+        ...u,
+        harga_pokok: updatedCost,
+        proc_persen: proc
+      };
     }));
     alert("Proporsional Harga Pokok untuk seluruh satuan berhasil dihitung berdasarkan konversi!");
   };
 
   const handleCalculateConversion = () => {
-    const baseUnit = modalUnits.find(u =>
-      u.jenis_satuan === "Satuan Dasar" ||
-      u.konversi === 1 ||
-      u.konversi === "1" ||
+    const baseUnit = modalUnits.find(u => 
+      u.jenis_satuan === "Satuan Dasar" || 
+      u.konversi === 1 || 
+      u.konversi === "1" || 
       parseFloat(u.konversi as any) === 1
     ) || modalUnits[0];
 
@@ -398,98 +364,22 @@ export default function ItemManager() {
       alert("Satuan dasar tidak ditemukan!");
       return;
     }
-
     const baseCost = parseFloat(baseUnit.harga_pokok as any) || 0;
     const baseSell = parseFloat(baseUnit.harga_jual as any) || 0;
-    const multiUnits = modalUnits.filter(u => u.id !== baseUnit.id);
-
-    // ── ARAH TERBALIK: Satuan Multi → Dasar ──────────────────────────────────
-    // Kondisi: Satuan Dasar belum terisi harga, tapi ada Satuan Multi yang sudah
-    if (baseCost <= 0 && baseSell <= 0 && multiUnits.length > 0) {
-      const firstMulti = multiUnits.find(
-        u => (parseFloat(u.harga_pokok as any) || 0) > 0 || (parseFloat(u.harga_jual as any) || 0) > 0
-      );
-      if (!firstMulti) {
-        alert(
-          "Tolong isi Harga Pokok atau Harga Jual pada setidaknya satu satuan " +
-          "(Satuan Dasar atau Satuan Multi) terlebih dahulu!"
-        );
-        return;
-      }
-
-      const multiCost = parseFloat(firstMulti.harga_pokok as any) || 0;
-      const multiSell = parseFloat(firstMulti.harga_jual as any) || 0;
-      const multiKonv = parseFloat(firstMulti.konversi as any) || 1;
-
-      const derivedBaseCost = multiCost > 0 ? Math.round(multiCost / multiKonv) : 0;
-      const derivedBaseSell = multiSell > 0 ? Math.round(multiSell / multiKonv) : 0;
-      const derivedMargin = derivedBaseCost > 0 && derivedBaseSell > 0
-        ? parseFloat((((derivedBaseSell - derivedBaseCost) / derivedBaseCost) * 100).toFixed(2))
-        : parseFloat(firstMulti.proc_persen as any) || 0;
-
-      const updatedUnits = modalUnits.map(u => {
-        const konv = parseFloat(u.konversi as any) || 1;
-
-        if (u.id === baseUnit.id) {
-          // Update Satuan Dasar dengan harga yang diturunkan
-          return {
-            ...u,
-            harga_pokok: derivedBaseCost,
-            harga_jual: derivedBaseSell,
-            proc_persen: derivedMargin
-          };
-        }
-
-        if (u.id === firstMulti.id) {
-          // Satuan referensi — hitung ulang proc saja
-          const proc = multiCost > 0 && multiSell > 0
-            ? parseFloat((((multiSell - multiCost) / multiCost) * 100).toFixed(2))
-            : derivedMargin;
-          return { ...u, proc_persen: proc };
-        }
-
-        // Satuan Multi lain — hitung dari Satuan Dasar yang baru
-        const updatedCost = derivedBaseCost > 0 ? Math.round(derivedBaseCost * konv) : 0;
-        const updatedSell = derivedBaseSell > 0 ? Math.round(derivedBaseSell * konv) : 0;
-        return {
-          ...u,
-          harga_pokok: updatedCost,
-          harga_jual: updatedSell,
-          proc_persen: derivedMargin
-        };
-      });
-
-      setModalUnits(updatedUnits);
-
-      const lines: string[] = [
-        `✅ Konversi berhasil dihitung dari ${firstMulti.nama}:`,
-        ``,
-      ];
-      if (derivedBaseCost > 0)
-        lines.push(`Harga Pokok ${baseUnit.nama} = Rp ${multiCost.toLocaleString("id-ID")} ÷ ${multiKonv} = Rp ${derivedBaseCost.toLocaleString("id-ID")}`);
-      if (derivedBaseSell > 0)
-        lines.push(`Harga Jual  ${baseUnit.nama} = Rp ${multiSell.toLocaleString("id-ID")} ÷ ${multiKonv} = Rp ${derivedBaseSell.toLocaleString("id-ID")}`);
-      alert(lines.join("\n"));
-      return;
-    }
-
-    // ── ARAH NORMAL: Satuan Dasar → Multi ────────────────────────────────────
-    if (baseCost <= 0 && baseSell <= 0) {
-      alert(
-        "Tolong isi Harga Pokok atau Harga Jual pada Satuan Dasar terlebih dahulu!\n\n" +
-        "Tip: Jika Anda sudah mengisi harga pada Satuan Multi (misal Dus), " +
-        "kosongkan saja harga Satuan Dasar (Pcs) lalu klik Hitung Konversi — " +
-        "sistem akan otomatis menghitung harga per Pcs dari harga Dus."
-      );
-      return;
-    }
-
     const baseMargin = parseFloat(baseUnit.proc_persen as any) || 0;
+
+    if (baseCost <= 0 && baseSell <= 0) {
+      alert("Tolong isi Harga Pokok atau Harga Jual Satuan Dasar terlebih dahulu!");
+      return;
+    }
+
     setModalUnits(prev => prev.map(u => {
       if (u.id === baseUnit.id) return u;
+      
       const konv = parseFloat(u.konversi as any) || 1;
       const updatedCost = Math.round(baseCost * konv);
       const updatedSell = Math.round(baseSell * konv);
+      
       return {
         ...u,
         harga_pokok: updatedCost,
@@ -718,9 +608,9 @@ export default function ItemManager() {
       setItems([...POSStorage.getItems()]);
       setShowEditModal(false);
       alert("Produk berhasil disimpan!");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Gagal menyimpan produk.");
+      alert(err?.message || "Gagal menyimpan produk.");
     }
   };
 
