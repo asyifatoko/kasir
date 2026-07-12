@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { 
   LayoutDashboard, ShoppingCart, Layers, History, Settings, 
   Clock, Wifi, Sparkles, UserCheck, Menu, X, LogOut, Warehouse,
-  Sun, Moon
+  Sun, Moon, Download
 } from "lucide-react";
 import POSDashboard from "./components/POSDashboard";
 import POSCashier from "./components/POSCashier";
@@ -16,9 +16,11 @@ import { POSStorage } from "./lib/storage";
 import { getCurrentSupabaseRole, logoutSupabase } from "./lib/auth";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
+import { usePwaInstall } from "./lib/pwaInstall";
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
+  const { canInstall, promptInstall } = usePwaInstall();
 
   // Peran login sekarang divalidasi lewat 2 jalur:
   //  - Online: Supabase Auth session (aman, ditegakkan oleh RLS di server)
@@ -197,6 +199,16 @@ export default function App() {
               </div>
             </div>
 
+            {canInstall && (
+              <button
+                onClick={promptInstall}
+                title="Install Aplikasi ke Perangkat"
+                className="p-1.5 hover:bg-emerald-500/15 hover:text-emerald-400 text-slate-500 rounded-lg transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               onClick={toggleTheme}
               title={theme === "dark" ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
@@ -233,6 +245,15 @@ export default function App() {
         </div>
  
         <div className="flex items-center gap-1">
+          {canInstall && (
+            <button
+              onClick={promptInstall}
+              title="Install Aplikasi ke Perangkat"
+              className="p-1.5 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <Download className="w-4.5 h-4.5" />
+            </button>
+          )}
           <button
             onClick={toggleTheme}
             title={theme === "dark" ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}

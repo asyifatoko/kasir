@@ -1,0 +1,51 @@
+{
+  "name": "Sistem Kasir Asyifa - POS",
+  "short_name": "Kasir Asyifa",
+  "description": "Aplikasi Kasir POS modern, responsif, cepat, dan tetap bisa dipakai saat koneksi internet putus (offline-ready), dengan multi-satuan, multi-barcode, multi-harga, HPP, varian, dan asisten AI.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buka Kasir",
+      "short_name": "Kasir",
+      "description": "Langsung buka layar kasir untuk transaksi baru",
+      "url": "/?tab=cashier",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

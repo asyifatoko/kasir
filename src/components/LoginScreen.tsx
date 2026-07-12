@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Crown, Shield, Coins, Lock, Eye, EyeOff, Sparkles, AlertCircle, Mail, WifiOff, Sun, Moon } from "lucide-react";
+import { Crown, Shield, Coins, Lock, Eye, EyeOff, Sparkles, AlertCircle, Mail, WifiOff, Sun, Moon, Download } from "lucide-react";
 import { POSStorage } from "../lib/storage";
 import { loginWithSupabase } from "../lib/auth";
 import { UserRole } from "../lib/types";
 import { ThemeMode } from "../lib/theme";
+import { usePwaInstall } from "../lib/pwaInstall";
 
 interface LoginScreenProps {
   onLoginSuccess: (role: UserRole) => void;
@@ -12,6 +13,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLoginSuccess, theme, onToggleTheme }: LoginScreenProps) {
+  const { canInstall, promptInstall } = usePwaInstall();
   const isOnline = POSStorage.isSupabaseActive();
 
   // --- Online mode state (Supabase Auth) ---
@@ -92,6 +94,17 @@ export default function LoginScreen({ onLoginSuccess, theme, onToggleTheme }: Lo
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden" id="pos-login-page">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
+
+      {canInstall && (
+        <button
+          type="button"
+          onClick={promptInstall}
+          title="Install Aplikasi ke Perangkat"
+          className="absolute top-5 right-16 z-20 p-2.5 bg-white/80 dark:bg-slate-800/80 border border-zinc-200 dark:border-slate-700 text-zinc-500 dark:text-slate-300 hover:text-emerald-500 rounded-xl shadow-sm backdrop-blur-xl transition-all cursor-pointer"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      )}
 
       <button
         type="button"
