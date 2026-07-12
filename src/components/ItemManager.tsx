@@ -318,12 +318,12 @@ export default function ItemManager() {
   };
 
   const handleCalculateBaseHpp = () => {
-    const baseUnit = modalUnits.find(u => 
-      u.jenis_satuan === "Satuan Dasar" || 
-      u.konversi === 1 || 
-      u.konversi === "1" || 
-      parseFloat(u.konversi as any) === 1
-    ) || modalUnits[0];
+    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
+    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
+    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
+    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
+    // isBaseRow di bawah untuk detail bug-nya).
+    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
 
     if (!baseUnit) {
       alert("Satuan dasar tidak ditemukan!");
@@ -353,12 +353,12 @@ export default function ItemManager() {
   };
 
   const handleCalculateConversion = () => {
-    const baseUnit = modalUnits.find(u => 
-      u.jenis_satuan === "Satuan Dasar" || 
-      u.konversi === 1 || 
-      u.konversi === "1" || 
-      parseFloat(u.konversi as any) === 1
-    ) || modalUnits[0];
+    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
+    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
+    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
+    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
+    // isBaseRow di bawah untuk detail bug-nya).
+    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
 
     if (!baseUnit) {
       alert("Satuan dasar tidak ditemukan!");
@@ -391,12 +391,12 @@ export default function ItemManager() {
   };
 
   const handleAddNewUnitRow = () => {
-    const baseUnit = modalUnits.find(u => 
-      u.jenis_satuan === "Satuan Dasar" || 
-      u.konversi === 1 || 
-      u.konversi === "1" || 
-      parseFloat(u.konversi as any) === 1
-    ) || modalUnits[0];
+    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
+    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
+    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
+    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
+    // isBaseRow di bawah untuk detail bug-nya).
+    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
     const baseCost = baseUnit ? parseFloat(baseUnit.harga_pokok as any) || 0 : 0;
     
     const newRow: ItemUnit = {
@@ -1783,7 +1783,18 @@ export default function ItemManager() {
                         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 font-mono">
                           {modalUnits.map((u, idx) => {
                             const isSelected = selectedUnitId === u.id;
-                            const isBaseRow = u.jenis_satuan === "Satuan Dasar" || u.konversi === 1 || u.konversi === "1" || parseFloat(u.konversi as any) === 1 || idx === 0;
+                            // PENTING: penanda "ini baris satuan dasar" HARUS berdasarkan
+                            // jenis_satuan / posisi (idx===0) saja — jangan pernah ikut
+                            // mengecek nilai konversi saat ini (u.konversi === 1). Kalau
+                            // dicek dari nilai konversi, maka SAAT SEDANG DIETIK ULANG
+                            // (mis. mengosongkan field 10 untuk ganti ke 24) field ini
+                            // sempat kosong -> fallback ke 1 -> baris dianggap "satuan
+                            // dasar" -> field langsung terkunci (disabled) di tengah
+                            // proses ketik, sehingga terlihat seperti "konversi tidak
+                            // berfungsi" (pengguna tidak bisa selesai mengubah angkanya,
+                            // dan Hitung Konversi jadi memperlakukan baris itu seolah
+                            // konversinya 1x, bukan kelipatan yang benar).
+                            const isBaseRow = u.jenis_satuan === "Satuan Dasar" || idx === 0;
                             
                             return (
                               <tr 
@@ -1829,7 +1840,15 @@ export default function ItemManager() {
                                     type="number"
                                     disabled={isBaseRow}
                                     value={u.konversi}
-                                    onChange={(e) => handleUnitChange(u.id, "konversi", parseFloat(e.target.value) || 1)}
+                                    onChange={(e) => handleUnitChange(u.id, "konversi", e.target.value === "" ? ("" as any) : (parseFloat(e.target.value) || 0))}
+                                    onBlur={(e) => {
+                                      // Baru dirapikan (minimal 1) SAAT keluar dari field,
+                                      // bukan di setiap ketikan — supaya proses mengosongkan
+                                      // lalu mengetik ulang angka baru tidak terputus.
+                                      if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                                        handleUnitChange(u.id, "konversi", 1);
+                                      }
+                                    }}
                                     className={`w-full py-1 px-1.5 border rounded text-xs text-center font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 ${
                                       isBaseRow 
                                         ? "bg-zinc-100/75 dark:bg-zinc-900/50 text-zinc-400 border-transparent" 
