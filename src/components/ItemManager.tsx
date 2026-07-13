@@ -202,12 +202,7 @@ export default function ItemManager() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Apakah Anda yakin ingin menghapus produk ini beserta seluruh satuannya?")) {
-      try {
-        await POSStorage.deleteItem(id);
-      } catch (err: any) {
-        console.error(err);
-        alert(err?.message || "Gagal menghapus produk.");
-      }
+      await POSStorage.deleteItem(id);
       setItems([...POSStorage.getItems()]);
     }
   };
@@ -318,68 +313,183 @@ export default function ItemManager() {
   };
 
   const handleCalculateBaseHpp = () => {
-    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
-    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
-    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
-    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
-    // isBaseRow di bawah untuk detail bug-nya).
-    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
+    const baseUnit = modalUnits.find(u =>
+      u.jenis_satuan === "Satuan Dasar" ||
+      u.konversi === 1 ||
+      u.konversi === "1" ||
+      parseFloat(u.konversi as any) === 1
+    ) || modalUnits[0];
 
     if (!baseUnit) {
       alert("Satuan dasar tidak ditemukan!");
       return;
     }
+
     const baseCost = parseFloat(baseUnit.harga_pokok as any) || 0;
+    const multiUnits = modalUnits.filter(u => u.id !== baseUnit.id);
+
+    // Deteksi arah: jika Satuan Dasar belum ada harga pokok tapi Satuan Multi ada,
+    // hitung terbalik: Harga Pokok Dasar = Harga Pokok Multi ÷ Konversi
+    if (baseCost <= 0 && multiUnits.length > 0) {
+      const firstMulti = multiUnits.find(u => (parseFloat(u.harga_pokok as any) || 0) > 0);
+      if (!firstMulti) {
+        alert("Tolong isi Harga Pokok pada salah satu satuan (Dasar atau Multi) terlebih dahulu!");
+        return;
+      }
+      const multiCost = parseFloat(firstMulti.harga_pokok as any) || 0;
+      const multiKonv = parseFloat(firstMulti.konversi as any) || 1;
+      const derivedBaseCost = Math.round(multiCost / multiKonv);
+
+      // Update Satuan Dasar dengan harga yang diturunkan dari Multi
+      const updatedUnits = modalUnits.map(u => {
+        if (u.id === baseUnit.id) {
+          const jual = parseFloat(u.harga_jual as any) || 0;
+          const proc = derivedBaseCost > 0
+            ? parseFloat((((jual - derivedBaseCost) / derivedBaseCost) * 100).toFixed(2))
+            : 0;
+          return { ...u, harga_pokok: derivedBaseCost, proc_persen: proc };
+        }
+        // Hitung ulang semua satuan multi lain berdasarkan harga dasar yang baru
+        const konv = parseFloat(u.konversi as any) || 1;
+        const updatedCost = Math.round(derivedBaseCost * konv);
+        const jual = parseFloat(u.harga_jual as any) || 0;
+        const proc = updatedCost > 0
+          ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2))
+          : 0;
+        return { ...u, harga_pokok: updatedCost, proc_persen: proc };
+      });
+      setModalUnits(updatedUnits);
+      alert(
+        `Harga Pokok Dasar dihitung dari Satuan Multi:\n` +
+        `${firstMulti.nama} (Rp ${multiCost.toLocaleString("id-ID")}) ÷ ${multiKonv} = ` +
+        `Rp ${derivedBaseCost.toLocaleString("id-ID")} per ${baseUnit.nama}`
+      );
+      return;
+    }
+
     if (baseCost <= 0) {
       alert("Tolong isi Harga Pokok Satuan Dasar terlebih dahulu!");
       return;
     }
 
+    // Arah normal: Satuan Dasar → Multi
     setModalUnits(prev => prev.map(u => {
       if (u.id === baseUnit.id) return u;
-      
       const konv = parseFloat(u.konversi as any) || 1;
       const updatedCost = Math.round(baseCost * konv);
       const jual = parseFloat(u.harga_jual as any) || 0;
-      const proc = updatedCost > 0 ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2)) : 0;
-      
-      return {
-        ...u,
-        harga_pokok: updatedCost,
-        proc_persen: proc
-      };
+      const proc = updatedCost > 0
+        ? parseFloat((((jual - updatedCost) / updatedCost) * 100).toFixed(2))
+        : 0;
+      return { ...u, harga_pokok: updatedCost, proc_persen: proc };
     }));
     alert("Proporsional Harga Pokok untuk seluruh satuan berhasil dihitung berdasarkan konversi!");
   };
 
   const handleCalculateConversion = () => {
-    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
-    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
-    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
-    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
-    // isBaseRow di bawah untuk detail bug-nya).
-    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
+    const baseUnit = modalUnits.find(u =>
+      u.jenis_satuan === "Satuan Dasar" ||
+      u.konversi === 1 ||
+      u.konversi === "1" ||
+      parseFloat(u.konversi as any) === 1
+    ) || modalUnits[0];
 
     if (!baseUnit) {
       alert("Satuan dasar tidak ditemukan!");
       return;
     }
+
     const baseCost = parseFloat(baseUnit.harga_pokok as any) || 0;
     const baseSell = parseFloat(baseUnit.harga_jual as any) || 0;
-    const baseMargin = parseFloat(baseUnit.proc_persen as any) || 0;
+    const multiUnits = modalUnits.filter(u => u.id !== baseUnit.id);
 
-    if (baseCost <= 0 && baseSell <= 0) {
-      alert("Tolong isi Harga Pokok atau Harga Jual Satuan Dasar terlebih dahulu!");
+    // ── ARAH TERBALIK: Satuan Multi → Dasar ──────────────────────────────────
+    // Kondisi: Satuan Dasar belum terisi harga, tapi ada Satuan Multi yang sudah
+    if (baseCost <= 0 && baseSell <= 0 && multiUnits.length > 0) {
+      const firstMulti = multiUnits.find(
+        u => (parseFloat(u.harga_pokok as any) || 0) > 0 || (parseFloat(u.harga_jual as any) || 0) > 0
+      );
+      if (!firstMulti) {
+        alert(
+          "Tolong isi Harga Pokok atau Harga Jual pada setidaknya satu satuan " +
+          "(Satuan Dasar atau Satuan Multi) terlebih dahulu!"
+        );
+        return;
+      }
+
+      const multiCost = parseFloat(firstMulti.harga_pokok as any) || 0;
+      const multiSell = parseFloat(firstMulti.harga_jual as any) || 0;
+      const multiKonv = parseFloat(firstMulti.konversi as any) || 1;
+
+      const derivedBaseCost = multiCost > 0 ? Math.round(multiCost / multiKonv) : 0;
+      const derivedBaseSell = multiSell > 0 ? Math.round(multiSell / multiKonv) : 0;
+      const derivedMargin = derivedBaseCost > 0 && derivedBaseSell > 0
+        ? parseFloat((((derivedBaseSell - derivedBaseCost) / derivedBaseCost) * 100).toFixed(2))
+        : parseFloat(firstMulti.proc_persen as any) || 0;
+
+      const updatedUnits = modalUnits.map(u => {
+        const konv = parseFloat(u.konversi as any) || 1;
+
+        if (u.id === baseUnit.id) {
+          // Update Satuan Dasar dengan harga yang diturunkan
+          return {
+            ...u,
+            harga_pokok: derivedBaseCost,
+            harga_jual: derivedBaseSell,
+            proc_persen: derivedMargin
+          };
+        }
+
+        if (u.id === firstMulti.id) {
+          // Satuan referensi — hitung ulang proc saja
+          const proc = multiCost > 0 && multiSell > 0
+            ? parseFloat((((multiSell - multiCost) / multiCost) * 100).toFixed(2))
+            : derivedMargin;
+          return { ...u, proc_persen: proc };
+        }
+
+        // Satuan Multi lain — hitung dari Satuan Dasar yang baru
+        const updatedCost = derivedBaseCost > 0 ? Math.round(derivedBaseCost * konv) : 0;
+        const updatedSell = derivedBaseSell > 0 ? Math.round(derivedBaseSell * konv) : 0;
+        return {
+          ...u,
+          harga_pokok: updatedCost,
+          harga_jual: updatedSell,
+          proc_persen: derivedMargin
+        };
+      });
+
+      setModalUnits(updatedUnits);
+
+      const lines: string[] = [
+        `✅ Konversi berhasil dihitung dari ${firstMulti.nama}:`,
+        ``,
+      ];
+      if (derivedBaseCost > 0)
+        lines.push(`Harga Pokok ${baseUnit.nama} = Rp ${multiCost.toLocaleString("id-ID")} ÷ ${multiKonv} = Rp ${derivedBaseCost.toLocaleString("id-ID")}`);
+      if (derivedBaseSell > 0)
+        lines.push(`Harga Jual  ${baseUnit.nama} = Rp ${multiSell.toLocaleString("id-ID")} ÷ ${multiKonv} = Rp ${derivedBaseSell.toLocaleString("id-ID")}`);
+      alert(lines.join("\n"));
       return;
     }
 
+    // ── ARAH NORMAL: Satuan Dasar → Multi ────────────────────────────────────
+    if (baseCost <= 0 && baseSell <= 0) {
+      alert(
+        "Tolong isi Harga Pokok atau Harga Jual pada Satuan Dasar terlebih dahulu!\n\n" +
+        "Tip: Jika Anda sudah mengisi harga pada Satuan Multi (misal Dus), " +
+        "kosongkan saja harga Satuan Dasar (Pcs) lalu klik Hitung Konversi — " +
+        "sistem akan otomatis menghitung harga per Pcs dari harga Dus."
+      );
+      return;
+    }
+
+    const baseMargin = parseFloat(baseUnit.proc_persen as any) || 0;
     setModalUnits(prev => prev.map(u => {
       if (u.id === baseUnit.id) return u;
-      
       const konv = parseFloat(u.konversi as any) || 1;
       const updatedCost = Math.round(baseCost * konv);
       const updatedSell = Math.round(baseSell * konv);
-      
       return {
         ...u,
         harga_pokok: updatedCost,
@@ -391,12 +501,12 @@ export default function ItemManager() {
   };
 
   const handleAddNewUnitRow = () => {
-    // Cari satuan dasar berdasarkan penanda jenis_satuan / posisi pertama saja
-    // (BUKAN nilai konversi saat ini) — sebelumnya ikut mencocokkan
-    // "konversi === 1", yang salah kaprah saat baris satuan lain kebetulan
-    // sedang bernilai 1 di tengah proses pengetikan ulang (lihat perbaikan
-    // isBaseRow di bawah untuk detail bug-nya).
-    const baseUnit = modalUnits.find(u => u.jenis_satuan === "Satuan Dasar") || modalUnits[0];
+    const baseUnit = modalUnits.find(u => 
+      u.jenis_satuan === "Satuan Dasar" || 
+      u.konversi === 1 || 
+      u.konversi === "1" || 
+      parseFloat(u.konversi as any) === 1
+    ) || modalUnits[0];
     const baseCost = baseUnit ? parseFloat(baseUnit.harga_pokok as any) || 0 : 0;
     
     const newRow: ItemUnit = {
@@ -608,9 +718,9 @@ export default function ItemManager() {
       setItems([...POSStorage.getItems()]);
       setShowEditModal(false);
       alert("Produk berhasil disimpan!");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err?.message || "Gagal menyimpan produk.");
+      alert("Gagal menyimpan produk.");
     }
   };
 
@@ -710,27 +820,9 @@ export default function ItemManager() {
   };
 
   const downloadExcelTemplate = () => {
-    // Row 1: Petunjuk pengisian
-    const instructionRow = {
-      "Kode Produk": "--- PETUNJUK: Isi data Anda mulai baris ke-3. Hapus baris contoh ini sebelum import. ---",
-      "Barcode Utama": "",
-      "Nama Produk": "Wajib diisi",
-      "Nama Pendek": "Maks 15 karakter",
-      "Brand / Merk": "Opsional",
-      "Kategori": "Contoh: Makanan, Minuman, Elektronik",
-      "Tipe Barang": "Isi: Barang",
-      "Rak": "Opsional, contoh: A1",
-      "Satuan Dasar": "Contoh: Pcs, Kg, Lusin",
-      "Harga Pokok": "Harga beli / HPP",
-      "Harga Jual": "Harga jual ke pelanggan",
-      "Stok Tersedia": "Stok awal",
-      "Stok Minimum": "Batas stok minimum (alert)",
-      "Status": "Isi: Aktif atau Non Aktif"
-    };
-
-    // Row 2 & 3: Data contoh
-    const sampleData = [
+    const templateData = [
       {
+        "ID Produk": "itm-sample-1",
         "Kode Produk": "BRG-89912",
         "Barcode Utama": "8991234567890",
         "Nama Produk": "Minyak Goreng Bimoli 2L",
@@ -739,31 +831,27 @@ export default function ItemManager() {
         "Kategori": "Sembako",
         "Tipe Barang": "Barang",
         "Rak": "A1-Sembako",
-        "Satuan Dasar": "Pcs",
-        "Harga Pokok": 30000,
-        "Harga Jual": 35000,
+        "Harga Jual (Pcs)": 35000,
         "Stok Tersedia": 150,
-        "Stok Minimum": 10,
         "Status": "Aktif"
       },
       {
+        "ID Produk": "itm-sample-2",
         "Kode Produk": "BRG-89915",
         "Barcode Utama": "8991234567891",
         "Nama Produk": "Indomie Goreng Original 85g",
         "Nama Pendek": "Indomie Goreng",
         "Brand / Merk": "Indofood",
-        "Kategori": "Makanan",
+        "Kategori": "Mie Instan",
         "Tipe Barang": "Barang",
         "Rak": "B2-Mie",
-        "Satuan Dasar": "Pcs",
-        "Harga Pokok": 2700,
-        "Harga Jual": 3100,
+        "Harga Jual (Pcs)": 3100,
         "Stok Tersedia": 500,
-        "Stok Minimum": 50,
         "Status": "Aktif"
       },
       {
-        "Kode Produk": "BRG-89916",
+        "ID Produk": "",
+        "Kode Produk": "",
         "Barcode Utama": "8991234567892",
         "Nama Produk": "Susu UHT Ultra Milk 1L",
         "Nama Pendek": "Ultra Milk 1L",
@@ -771,38 +859,15 @@ export default function ItemManager() {
         "Kategori": "Minuman",
         "Tipe Barang": "Barang",
         "Rak": "C3-Susu",
-        "Satuan Dasar": "Pcs",
-        "Harga Pokok": 16000,
-        "Harga Jual": 18500,
+        "Harga Jual (Pcs)": 18500,
         "Stok Tersedia": 120,
-        "Stok Minimum": 20,
         "Status": "Aktif"
       }
     ];
 
-    const allRows = [instructionRow, ...sampleData];
-    const worksheet = XLSX.utils.json_to_sheet(allRows);
-
-    // Set lebar kolom agar mudah dibaca
-    worksheet['!cols'] = [
-      { wch: 15 }, // Kode Produk
-      { wch: 18 }, // Barcode
-      { wch: 30 }, // Nama Produk
-      { wch: 16 }, // Nama Pendek
-      { wch: 15 }, // Brand
-      { wch: 15 }, // Kategori
-      { wch: 12 }, // Tipe Barang
-      { wch: 12 }, // Rak
-      { wch: 13 }, // Satuan Dasar
-      { wch: 14 }, // Harga Pokok
-      { wch: 14 }, // Harga Jual
-      { wch: 14 }, // Stok Tersedia
-      { wch: 14 }, // Stok Minimum
-      { wch: 12 }, // Status
-    ];
-
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Import Produk");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Katalog");
     
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -835,135 +900,65 @@ export default function ItemManager() {
             alert("File Excel kosong atau format tidak sesuai!");
             return;
           }
-
-          // Filter baris petunjuk (baris dengan kata "PETUNJUK" atau "Wajib diisi" di kolom Nama Produk)
-          const filteredData = jsonData.filter(row => {
-            const nama = String(row["Nama Produk"] || row["nama_barang"] || row["Nama"] || "");
-            const kode = String(row["Kode Produk"] || row["kode_barang"] || "");
-            // Skip baris instruksi/header
-            if (kode.includes("PETUNJUK") || nama === "Wajib diisi" || nama === "") return false;
-            return true;
-          });
-
-          if (filteredData.length === 0) {
-            alert("Tidak ada data produk yang valid ditemukan. Pastikan kolom 'Nama Produk' sudah diisi.");
-            return;
-          }
-
-          // Ambil semua produk existing untuk cek duplikat
-          const existingItems = POSStorage.getItems();
-          const existingKodes = new Set(existingItems.map(i => i.kode_barang.toLowerCase()));
-          const existingBarcodes = new Set(existingItems.map(i => i.barcode_utama).filter(Boolean));
-
+          
           let importCount = 0;
-          let skipCount = 0;
-          const errors: string[] = [];
-
-          for (let i = 0; i < filteredData.length; i++) {
-            const row = filteredData[i];
-            const rowNum = i + 2; // Baris di Excel (mulai dari 2 karena baris 1 = header)
-
-            // Validasi field wajib
-            const nama_barang = String(row["Nama Produk"] || row["nama_barang"] || row["Nama"] || "").trim();
-            if (!nama_barang) {
-              errors.push(`Baris ${rowNum}: Nama Produk kosong, dilewati.`);
-              skipCount++;
-              continue;
-            }
-
-            // Generate ID unik yang benar-benar unik (pakai random + index)
-            const uniqueSuffix = Date.now().toString(36) + "-" + i + "-" + Math.random().toString(36).slice(2, 7);
-            const id = "item-" + uniqueSuffix;
-
-            // Kode produk — generate jika kosong
-            const rawKode = String(row["Kode Produk"] || row["kode_barang"] || "").trim();
-            const kode_barang = rawKode || ("BRG-" + Math.floor(10000 + Math.random() * 90000));
-
-            // Cek duplikat kode produk
-            if (existingKodes.has(kode_barang.toLowerCase())) {
-              errors.push(`Baris ${rowNum}: Kode produk "${kode_barang}" sudah ada, dilewati.`);
-              skipCount++;
-              continue;
-            }
-
-            // Barcode — pastikan string, bukan angka yang diubah notasi ilmiah oleh Excel
-            const rawBarcode = row["Barcode Utama"] || row["barcode_utama"] || row["Barcode"] || "";
-            const barcode_utama = rawBarcode !== "" ? String(Math.round(Number(rawBarcode))) : "";
-
-            // Cek duplikat barcode (hanya jika barcode diisi)
-            if (barcode_utama && existingBarcodes.has(barcode_utama)) {
-              errors.push(`Baris ${rowNum}: Barcode "${barcode_utama}" sudah terdaftar, dilewati.`);
-              skipCount++;
-              continue;
-            }
-
-            const brand_merk = String(row["Brand / Merk"] || row["brand_merk"] || row["Brand"] || "").trim();
-            const kategori = String(row["Kategori"] || row["kategori"] || "Makanan").trim();
-            const tipe_barang = "Barang" as const;
-            const rak = String(row["Rak"] || row["rak"] || "").trim();
-            const rawStatus = String(row["Status"] || row["status"] || "Aktif").trim();
-            const status: 'Aktif' | 'Non Aktif' = rawStatus === "Non Aktif" ? "Non Aktif" : "Aktif";
-            const satuan_dasar = String(row["Satuan Dasar"] || row["satuan_dasar"] || row["Satuan"] || "Pcs").trim();
-
-            // Harga — support kolom lama "Harga Jual (Pcs)" dan kolom baru "Harga Jual"
-            const price = parseFloat(String(row["Harga Jual"] || row["Harga Jual (Pcs)"] || row["harga_jual"] || row["Harga"] || 0)) || 0;
-            const harga_pokok = parseFloat(String(row["Harga Pokok"] || row["harga_pokok"] || row["HPP"] || 0)) || 0;
-            const stockQty = parseFloat(String(row["Stok Tersedia"] || row["stok_tersedia"] || row["Stok"] || 0)) || 0;
-            const stokMinimum = parseFloat(String(row["Stok Minimum"] || row["stok_minimum"] || 5)) || 5;
-
+          for (const row of jsonData) {
+            // Check required fields
+            const nama_barang = row["Nama Produk"] || row["nama_barang"] || row["Nama"];
+            if (!nama_barang) continue;
+            
+            const id = row["ID Produk"] || row["id"] || ("item-" + Date.now() + "-" + Math.floor(Math.random() * 1000));
+            const kode_barang = row["Kode Produk"] || row["kode_barang"] || ("BRG-" + Math.floor(10000 + Math.random() * 90000));
+            const barcode_utama = String(row["Barcode Utama"] || row["barcode_utama"] || row["Barcode"] || "");
+            const brand_merk = row["Brand / Merk"] || row["brand_merk"] || row["Brand"] || "";
+            const kategori = row["Kategori"] || row["kategori"] || "Makanan";
+            const tipe_barang = row["Tipe Barang"] || row["tipe_barang"] || "Barang";
+            const rak = row["Rak"] || row["rak"] || "";
+            const status = row["Status"] || row["status"] || "Aktif";
+            const price = parseFloat(row["Harga Jual (Pcs)"] || row["harga_jual"] || row["Harga"] || 0);
+            const stockQty = parseFloat(row["Stok Tersedia"] || row["stok_tersedia"] || row["Stok"] || 0);
+            
             const newItem: Item = {
               id,
               kode_barang,
               barcode_utama,
               nama_barang,
-              nama_pendek: String(row["Nama Pendek"] || row["nama_pendek"] || "").trim() || nama_barang.slice(0, 15),
+              nama_pendek: row["Nama Pendek"] || row["nama_pendek"] || nama_barang.slice(0, 15),
               nama_cetak_struk: nama_barang.slice(0, 25).toUpperCase(),
               brand_merk,
               kategori,
               tipe_barang,
               rak,
               status,
-              satuan_dasar,
-              foto_produk: ""
+              foto_produk: row["foto_produk"] || ""
             };
             
-            // Simpan produk
+            // Save Item
             await POSStorage.createItem(newItem);
-
-            // Tambah ke set agar tidak duplikat dalam batch yang sama
-            existingKodes.add(kode_barang.toLowerCase());
-            if (barcode_utama) existingBarcodes.add(barcode_utama);
             
-            // Buat unit satuan dasar
+            // Create corresponding default "Pcs" unit
             const defaultUnit: ItemUnit = {
-              id: "unit-" + id + "-base",
+              id: "unit-" + id + "-pcs",
               item_id: id,
-              nama: satuan_dasar,
+              nama: "Pcs",
               konversi: 1,
-              jenis_satuan: "Satuan Dasar",
               barcode: barcode_utama,
-              harga_jual: price,
-              harga_pokok: harga_pokok,
-              poin: 0,
-              proc_persen: harga_pokok > 0 && price > 0
-                ? parseFloat((((price - harga_pokok) / harga_pokok) * 100).toFixed(2))
-                : 0,
-              komisi_sales: 0
+              harga_jual: price
             };
             await POSStorage.saveUnit(defaultUnit);
             
-            // Buat data stok
+            // Create stock record
             const defaultStock: ItemStock = {
               id: "stock-" + id,
               item_id: id,
               gudang: "Gudang Utama",
               stok_tersedia: stockQty,
               stok_dipesan: 0,
-              stok_minimum: stokMinimum,
+              stok_minimum: 5,
               stok_maksimum: 1000,
-              safety_stock: Math.floor(stokMinimum / 2),
-              reorder_point: stokMinimum + 5,
-              buffer_stock: Math.floor(stokMinimum / 2)
+              safety_stock: 2,
+              reorder_point: 10,
+              buffer_stock: 2
             };
             await POSStorage.saveStock(defaultStock);
             
@@ -971,18 +966,10 @@ export default function ItemManager() {
           }
           
           setItems([...POSStorage.getItems()]);
-
-          let message = `✅ Berhasil mengimpor ${importCount} produk dari Excel.`;
-          if (skipCount > 0) {
-            message += `\n⚠️ ${skipCount} baris dilewati.`;
-          }
-          if (errors.length > 0) {
-            message += "\n\nDetail:\n" + errors.join("\n");
-          }
-          alert(message);
-        } catch (err) {
-          console.error(err);
-          alert("Gagal membaca file Excel. Pastikan format kolom sesuai dengan template yang disediakan.");
+          alert(`Berhasil mengimpor ${importCount} produk dari Excel ke dalam database.`);
+        } catch (e) {
+          console.error(e);
+          alert("Gagal membaca file Excel. Pastikan format kolom sesuai.");
         }
       };
       reader.readAsArrayBuffer(file);
@@ -1906,18 +1893,7 @@ export default function ItemManager() {
                         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 font-mono">
                           {modalUnits.map((u, idx) => {
                             const isSelected = selectedUnitId === u.id;
-                            // PENTING: penanda "ini baris satuan dasar" HARUS berdasarkan
-                            // jenis_satuan / posisi (idx===0) saja — jangan pernah ikut
-                            // mengecek nilai konversi saat ini (u.konversi === 1). Kalau
-                            // dicek dari nilai konversi, maka SAAT SEDANG DIETIK ULANG
-                            // (mis. mengosongkan field 10 untuk ganti ke 24) field ini
-                            // sempat kosong -> fallback ke 1 -> baris dianggap "satuan
-                            // dasar" -> field langsung terkunci (disabled) di tengah
-                            // proses ketik, sehingga terlihat seperti "konversi tidak
-                            // berfungsi" (pengguna tidak bisa selesai mengubah angkanya,
-                            // dan Hitung Konversi jadi memperlakukan baris itu seolah
-                            // konversinya 1x, bukan kelipatan yang benar).
-                            const isBaseRow = u.jenis_satuan === "Satuan Dasar" || idx === 0;
+                            const isBaseRow = u.jenis_satuan === "Satuan Dasar" || u.konversi === 1 || u.konversi === "1" || parseFloat(u.konversi as any) === 1 || idx === 0;
                             
                             return (
                               <tr 
@@ -1963,15 +1939,7 @@ export default function ItemManager() {
                                     type="number"
                                     disabled={isBaseRow}
                                     value={u.konversi}
-                                    onChange={(e) => handleUnitChange(u.id, "konversi", e.target.value === "" ? ("" as any) : (parseFloat(e.target.value) || 0))}
-                                    onBlur={(e) => {
-                                      // Baru dirapikan (minimal 1) SAAT keluar dari field,
-                                      // bukan di setiap ketikan — supaya proses mengosongkan
-                                      // lalu mengetik ulang angka baru tidak terputus.
-                                      if (!e.target.value || parseFloat(e.target.value) <= 0) {
-                                        handleUnitChange(u.id, "konversi", 1);
-                                      }
-                                    }}
+                                    onChange={(e) => handleUnitChange(u.id, "konversi", parseFloat(e.target.value) || 1)}
                                     className={`w-full py-1 px-1.5 border rounded text-xs text-center font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 ${
                                       isBaseRow 
                                         ? "bg-zinc-100/75 dark:bg-zinc-900/50 text-zinc-400 border-transparent" 

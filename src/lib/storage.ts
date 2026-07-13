@@ -556,25 +556,18 @@ export class POSStorage {
     };
 
     this.items.push(newItem);
-    // Selalu simpan ke cache lokal dulu (bukan cuma saat offline) supaya
-    // data barang TIDAK HILANG walau penulisan ke Supabase gagal/ditolak.
-    this.saveAllToLocalStorage();
 
     // Audit Log
     this.addHistoryLog(newItem.id, userName, "CREATE", JSON.stringify(newItem));
 
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("items").insert([newItem]);
-        if (error) throw error;
+        await supabase.from("items").insert([newItem]);
       } catch (err) {
-        console.error("Supabase write failed, item hanya tersimpan lokal", err);
-        // Lempar lagi errornya supaya UI (mis. ItemManager) bisa kasih tahu
-        // pengguna bahwa barang TIDAK masuk ke Supabase — sebelumnya error
-        // ini ditelan diam-diam dan UI selalu bilang "berhasil disimpan"
-        // padahal cuma tersimpan lokal (hilang setelah refresh).
-        throw new Error(`Barang tersimpan di perangkat ini, tapi GAGAL sinkron ke Supabase (kemungkinan RLS/izin akun). Detail: ${(err as any)?.message || err}`);
+        console.error("Supabase write failed, saved to local cache", err);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
 
     return newItem;
@@ -592,19 +585,18 @@ export class POSStorage {
     };
 
     this.items[idx] = updatedItem;
-    this.saveAllToLocalStorage();
 
     // Audit Log
     this.addHistoryLog(id, userName, "UPDATE", JSON.stringify({ old: oldItem, updated: updatedItem }));
 
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("items").update(updates).eq("id", id);
-        if (error) throw error;
+        await supabase.from("items").update(updates).eq("id", id);
       } catch (err) {
-        console.error("Supabase update failed, item hanya tersimpan lokal", err);
-        throw new Error(`Perubahan tersimpan di perangkat ini, tapi GAGAL sinkron ke Supabase. Detail: ${(err as any)?.message || err}`);
+        console.error("Supabase update failed, saved to local cache", err);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
 
     return updatedItem;
@@ -626,16 +618,15 @@ export class POSStorage {
     this.hpps = this.hpps.filter(h => h.item_id !== id);
 
     this.addHistoryLog(id, userName, "DELETE", JSON.stringify(oldItem));
-    this.saveAllToLocalStorage();
 
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("items").delete().eq("id", id);
-        if (error) throw error;
+        await supabase.from("items").delete().eq("id", id);
       } catch (err) {
         console.error("Supabase delete failed", err);
-        throw new Error(`Barang dihapus di perangkat ini, tapi GAGAL sinkron hapus ke Supabase. Detail: ${(err as any)?.message || err}`);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
 
     return true;
@@ -665,16 +656,14 @@ export class POSStorage {
       this.units.push(savedUnit);
     }
 
-    this.saveAllToLocalStorage();
-
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("item_units").upsert([savedUnit]);
-        if (error) throw error;
+        await supabase.from("item_units").upsert([savedUnit]);
       } catch (e) {
         console.error("Supabase unit write error", e);
-        throw new Error(`Satuan barang tersimpan lokal, tapi GAGAL sinkron ke Supabase. Detail: ${(e as any)?.message || e}`);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
     return savedUnit;
   }
@@ -684,16 +673,14 @@ export class POSStorage {
     if (idx === -1) return false;
     this.units.splice(idx, 1);
 
-    this.saveAllToLocalStorage();
-
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("item_units").delete().eq("id", unitId);
-        if (error) throw error;
+        await supabase.from("item_units").delete().eq("id", unitId);
       } catch (e) {
         console.error("Supabase unit delete error", e);
-        throw new Error(`Satuan barang terhapus lokal, tapi GAGAL sinkron hapus ke Supabase. Detail: ${(e as any)?.message || e}`);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
     return true;
   }
@@ -819,16 +806,14 @@ export class POSStorage {
       this.stocks.push(stock);
     }
 
-    this.saveAllToLocalStorage();
-
     if (this.isSubSupabaseReady) {
       try {
-        const { error } = await supabase.from("item_stock").upsert([stock]);
-        if (error) throw error;
+        await supabase.from("item_stock").upsert([stock]);
       } catch (e) {
         console.error("Supabase stock write error", e);
-        throw new Error(`Stok tersimpan lokal, tapi GAGAL sinkron ke Supabase. Detail: ${(e as any)?.message || e}`);
       }
+    } else {
+      this.saveAllToLocalStorage();
     }
     return stock;
   }
@@ -1209,20 +1194,11 @@ export class POSStorage {
     };
 
     this.transactions.push(newTx);
-    // Cache lokal SEGERA (bukan menunggu akhir fungsi) — supaya kalau nanti
-    // ada langkah sinkron Supabase yang gagal di tengah jalan, transaksi ini
-    // tetap tidak hilang dari perangkat kasir.
-    this.saveAllToLocalStorage();
 
     if (activeShift) {
       const isCash = tx.payment_method === "Cash" || tx.payment_method === "Tunai";
       await this.updateShiftSales(activeShift.id, tx.grand_total, isCash);
     }
-
-    // Kumpulkan peringatan sinkron (kalau ada) tanpa membatalkan transaksi —
-    // penjualan yang sudah tercatat di kasir TIDAK BOLEH gagal/hilang cuma
-    // karena koneksi ke Supabase bermasalah sesaat.
-    const syncWarnings: string[] = [];
 
     // Deduct stock for each sold item/unit, always in the active gudang
     for (const cartItem of tx.items) {
@@ -1239,11 +1215,7 @@ export class POSStorage {
           if (targetStock) {
             const updated = { ...targetStock };
             updated.stok_tersedia = Math.max(0, updated.stok_tersedia - compDeductQty);
-            try {
-              await this.saveStock(updated);
-            } catch (e) {
-              syncWarnings.push((e as any)?.message || String(e));
-            }
+            await this.saveStock(updated);
 
             this.addStockLog(
               comp.component_item_id,
@@ -1262,11 +1234,7 @@ export class POSStorage {
         if (targetStock) {
           const updated = { ...targetStock };
           updated.stok_tersedia = Math.max(0, updated.stok_tersedia - totalQtyToDeduct);
-          try {
-            await this.saveStock(updated);
-          } catch (e) {
-            syncWarnings.push((e as any)?.message || String(e));
-          }
+          await this.saveStock(updated);
 
           this.addStockLog(
             itemId,
@@ -1290,21 +1258,9 @@ export class POSStorage {
     }
 
     if (this.isSubSupabaseReady) {
-      try {
-        const { error } = await supabase.from("transactions").insert([newTx]);
-        if (error) throw error;
-      } catch (e) {
-        syncWarnings.push((e as any)?.message || String(e));
-      }
-    }
-
-    if (syncWarnings.length > 0) {
-      // Transaksi & stok tetap tersimpan aman di perangkat ini (localStorage),
-      // tapi belum semuanya tersinkron ke Supabase. Jangan gagalkan
-      // penjualan cuma karena ini — cukup catat sebagai peringatan supaya
-      // UI kasir bisa menampilkan notifikasi kecil kalau perlu.
-      console.warn("Transaksi tersimpan lokal, sebagian gagal sinkron ke Supabase:", syncWarnings);
-      (newTx as any)._syncWarning = syncWarnings.join("; ");
+      await supabase.from("transactions").insert([newTx]);
+    } else {
+      this.saveAllToLocalStorage();
     }
 
     return newTx;
@@ -1332,11 +1288,7 @@ export class POSStorage {
           if (targetStock) {
             const updated = { ...targetStock };
             updated.stok_tersedia += compQty;
-            try {
-              await this.saveStock(updated);
-            } catch (e) {
-              console.warn("Rollback: gagal sinkron stok komponen paket ke Supabase", e);
-            }
+            await this.saveStock(updated);
             this.addStockLog(comp.component_item_id, updated.gudang, "Koreksi", compQty, updated.stok_tersedia - compQty, updated.stok_tersedia, `Batal Transaksi: ${tx.invoice_no}`);
           }
         }
@@ -1345,11 +1297,7 @@ export class POSStorage {
         if (targetStock) {
           const updated = { ...targetStock };
           updated.stok_tersedia += baseQtyChange;
-          try {
-            await this.saveStock(updated);
-          } catch (e) {
-            console.warn("Rollback: gagal sinkron stok ke Supabase", e);
-          }
+          await this.saveStock(updated);
           this.addStockLog(itemId, updated.gudang, "Koreksi", baseQtyChange, updated.stok_tersedia - baseQtyChange, updated.stok_tersedia, `Batal Transaksi: ${tx.invoice_no}`);
         }
       }
@@ -1363,15 +1311,11 @@ export class POSStorage {
 
     tx.is_rolled_back = true;
     tx.rolled_back_at = new Date().toISOString();
-    this.saveAllToLocalStorage();
 
     if (this.isSubSupabaseReady) {
-      try {
-        const { error } = await supabase.from("transactions").update({ is_rolled_back: true, rolled_back_at: tx.rolled_back_at }).eq("id", txId);
-        if (error) throw error;
-      } catch (e) {
-        console.warn("Rollback: status pembatalan gagal sinkron ke Supabase (tersimpan lokal)", e);
-      }
+      await supabase.from("transactions").update({ is_rolled_back: true, rolled_back_at: tx.rolled_back_at }).eq("id", txId);
+    } else {
+      this.saveAllToLocalStorage();
     }
 
     return true;

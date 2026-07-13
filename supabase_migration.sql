@@ -333,14 +333,14 @@ DROP POLICY IF EXISTS profiles_select_own ON profiles;
 CREATE POLICY profiles_select_own ON profiles
   FOR SELECT USING (id = auth.uid());
 
--- --- Tabel master barang: baca oleh semua role login,
+-- --- Tabel master barang & stok: baca oleh semua role login,
 --     tulis hanya owner/admin ---
 DO $$
 DECLARE
   t TEXT;
 BEGIN
   FOR t IN SELECT unnest(ARRAY[
-    'items','item_units','item_barcodes','item_prices',
+    'items','item_units','item_barcodes','item_prices','item_stock',
     'item_serials','item_discount','item_hpp','item_purchase_price',
     'item_bundle','item_packages','item_history'
   ])
@@ -357,28 +357,6 @@ BEGIN
     );
   END LOOP;
 END $$;
-
--- --- item_stock: kasus KHUSUS, beda dari tabel master lain di atas.
---     Baca: semua role login. INSERT/DELETE (menambah/menghapus baris
---     gudang): hanya owner/admin. UPDATE (mengubah stok_tersedia):
---     kasir JUGA harus boleh, karena checkout normal & rollback
---     transaksi memanggil UPDATE ke tabel ini untuk memotong/
---     mengembalikan stok — kalau kasir tidak diizinkan, penjualan
---     akan terlihat sukses di layar tapi stoknya tidak pernah
---     tersinkron ke Supabase (baris ini blokir diam-diam oleh RLS).
-DROP POLICY IF EXISTS item_stock_read ON item_stock;
-CREATE POLICY item_stock_read ON item_stock
-  FOR SELECT USING (current_role_pos() IN ('owner','admin','kasir'));
-DROP POLICY IF EXISTS item_stock_update ON item_stock;
-CREATE POLICY item_stock_update ON item_stock
-  FOR UPDATE USING (current_role_pos() IN ('owner','admin','kasir'))
-  WITH CHECK (current_role_pos() IN ('owner','admin','kasir'));
-DROP POLICY IF EXISTS item_stock_insert ON item_stock;
-CREATE POLICY item_stock_insert ON item_stock
-  FOR INSERT WITH CHECK (current_role_pos() IN ('owner','admin'));
-DROP POLICY IF EXISTS item_stock_delete ON item_stock;
-CREATE POLICY item_stock_delete ON item_stock
-  FOR DELETE USING (current_role_pos() IN ('owner','admin'));
 
 -- --- item_stock_logs: dibaca semua role, ditulis semua role login
 --     (kasir & owner/admin sama-sama memicu log lewat transaksi/opname) ---

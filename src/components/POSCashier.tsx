@@ -352,13 +352,6 @@ export default function POSCashier() {
       // Refresh active shift stats
       setActiveShift(POSStorage.getActiveShift());
       clearCart();
-      if ((savedTx as any)._syncWarning) {
-        // Transaksi & stok tetap AMAN tersimpan di perangkat ini — cuma
-        // belum semua bagian tersinkron ke Supabase (mis. internet putus
-        // sesaat). Beri tahu kasir tanpa membuatnya panik seolah gagal jual.
-        console.warn("Peringatan sinkron:", (savedTx as any)._syncWarning);
-        alert("Transaksi berhasil dan tersimpan di perangkat ini.\n\nCatatan: sebagian data belum tersinkron ke server pusat (cek koneksi internet). Data akan otomatis lengkap saat sinkron berikutnya.");
-      }
     } catch (e: any) {
       console.error(e);
       alert(e?.message || "Gagal mencatat transaksi.");
